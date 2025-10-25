@@ -1,21 +1,19 @@
-/* 全局基础重置 */
+/* =====================
+   🌙 全局基础设置
+   ===================== */
 * {
   box-sizing: border-box;
 }
 
-/* 整个页面背景和文字基础 */
+/* 全局背景与文字 */
 body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-stack);
   line-height: 1.5;
   margin: 0;
-
-  /* 让背景和布局撑满视窗 */
   height: 100vh;
 
-  /* 我们的 app 有一个 .page 容器。
-     这里让 .page 居中到屏幕中央，无论桌面还是移动。 */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -24,31 +22,36 @@ body {
 /* 页面主容器 */
 .page {
   width: 100%;
-  max-width: 900px; /* 稍微放大点呼吸空间，原来是 600px */
-
-  /* 改成纵向 flex 布局，分成：header / 内容区 / footer */
-  display: flex;
-  flex-direction: column;
-
-  /* 把页面整个拉到全高，这样 footer 能贴近底部 */
+  max-width: 900px;
   height: 100vh;
 
-  /* 两端分布：header在上，footer在下，中间的view-area占中段 */
+  display: flex;
+  flex-direction: column;
   justify-content: space-between;
-
-  /* 内边距，避免内容贴边 */
   padding: 2rem 1rem 2rem;
+  overflow: hidden; /* 防止过渡时轻微滚动条闪动 */
 }
 
-/* 顶部标题区域（你的 "Sy · timeline" 那块） */
+/* =====================
+   ✨ 顶部标题淡入动画
+   ===================== */
 .site-header {
   text-align: center;
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 500;
-
-  /* 不要太靠顶部，给一点空间 */
   margin-bottom: 1rem;
+
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: headerFadeIn 0.6s ease-out 0.15s forwards;
+}
+
+@keyframes headerFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .site-header .name {
@@ -56,7 +59,6 @@ body {
   font-weight: 600;
   color: var(--fg);
 }
-
 .site-header .sub {
   font-size: 0.8rem;
   color: var(--muted);
@@ -64,31 +66,25 @@ body {
   line-height: 1.4;
 }
 
-/* 中间主展示区（FocusView / TimelineList） */
+/* =====================
+   中间内容区
+   ===================== */
 .view-area {
-  /* 我们让它吃掉中间的剩余空间 */
   flex: 1;
-
-  /* 然后把里面的内容（也就是 FocusView 的左右两列）居中 */
   display: flex;
   justify-content: center;
   align-items: center;
-
-  /* 让它别贴 header 太死 */
   padding: 1rem 0;
 }
 
-/* FocusView 里面（左：时间+按钮，右：卡片）本身已经用 grid 和 min-width:7rem 做布局了
-   我们不在这里强行改它的方向，这样它会在大屏幕上并排，
-   在手机上用它自己的 @media 规则自动折叠成上下 */
-
+/* 时间线列表基础 */
 .timeline {
   display: flex;
   flex-direction: column;
   margin-top: 1rem;
 }
 
-/* 没贴子时的占位文案 */
+/* 没有内容时的占位 */
 .empty {
   color: var(--muted);
   text-align: center;
@@ -96,18 +92,51 @@ body {
   font-size: 0.9rem;
 }
 
-/* 底部小尾巴 */
+/* 页脚 */
 .site-footer {
   text-align: center;
   font-size: 0.75rem;
   color: var(--muted);
   user-select: none;
-
-  /* 给脚注一点点上方间距，不然太贴边 */
   margin-top: 2rem;
+
+  opacity: 0;
+  transform: translateY(6px);
+  animation: footerFadeIn 0.6s ease-out 0.3s forwards;
 }
 
-/* 响应式针对非常窄的屏幕（比如手机）稍微调 padding */
+@keyframes footerFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =====================
+   ✨ 全局淡入 + 回弹上浮动画
+   ===================== */
+.fade-enter-active,
+.fade-leave-active {
+  transition:
+    opacity 0.45s ease-in-out,
+    transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  /* 回弹式 cubic-bezier */
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(22px) scale(0.98);
+}
+
+.fade-enter-to {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* =====================
+   📱 响应式：手机端更紧凑
+   ===================== */
 @media (max-width: 480px) {
   .page {
     padding: 1rem 1rem 1.5rem;

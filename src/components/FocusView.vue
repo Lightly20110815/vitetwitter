@@ -1,27 +1,28 @@
 <template>
-  <div class="focus-layout">
-    <!-- 左侧：时间 + 控制 -->
-    <div class="focus-left">
-      <!-- 点击时间块 => 切换到 timeline 视图 -->
-      <div class="focus-time" @click="toggleView" title="点击切换成时间线视图">
-        <div class="focus-hm">{{ hhmm }}</div>
-        <div class="focus-date">{{ mmddyyyy }}</div>
+  <div class="focus-wrapper">
+    <div class="focus-timeline">
+      <div class="time">
+        <div class="clock">{{ timePart }}</div>
+        <div class="date">{{ datePart }}</div>
       </div>
 
-      <!-- 上/下切换按钮 -->
-      <div class="focus-nav">
-        <button @click="goNext" :disabled="index === 0">▲</button>
-        <div class="dot"></div>
-        <button @click="goPrev" :disabled="index === total - 1">▼</button>
-        <div class="idx-info">{{ index + 1 }} / {{ total }}</div>
-      </div>
-    </div>
+      <div
+        class="dot"
+        :class="{ active: true }"
+        @click="$emit('toggleView')"
+        title="切换视图"
+      ></div>
 
-    <!-- 右侧：当前这条贴子的内容 -->
-    <div class="focus-card">
-      <article class="post-card focus-card-inner">
+      <article class="post-card">
         <div class="content" v-html="linkedContent"></div>
       </article>
+    </div>
+
+    <!-- 底部的导航箭头与页码 -->
+    <div class="focus-nav">
+      <button class="nav-btn" @click="$emit('prev')" :disabled="isFirst">▲</button>
+      <span class="index">{{ index + 1 }} / {{ total }}</span>
+      <button class="nav-btn" @click="$emit('next')" :disabled="isLast">▼</button>
     </div>
   </div>
 </template>
@@ -31,40 +32,22 @@ import { computed } from "vue";
 
 const props = defineProps({
   post: { type: Object, required: true },
-  index: { type: Number, required: true },
-  total: { type: Number, required: true }
+  index: Number,
+  total: Number,
+  isFirst: Boolean,
+  isLast: Boolean,
 });
 
-const emit = defineEmits(["prev", "next", "toggleView"]);
+const timePart = computed(() => {
+  const d = new Date(props.post.created_at);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+});
 
-function toggleView() {
-  emit("toggleView");
-}
-function goPrev() {
-  emit("prev");
-}
-function goNext() {
-  emit("next");
-}
+const datePart = computed(() => {
+  const d = new Date(props.post.created_at);
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`;
+});
 
-// === 时间格式化 ===
-function parseParts(iso) {
-  const d = new Date(iso);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const hh = String(d.getHours()).padStart(2, "0");
-  const m2 = String(d.getMinutes()).padStart(2, "0");
-  return {
-    hhmm: `${hh}:${m2}`,
-    mmddyyyy: `${mm}/${dd}/${yyyy}`
-  };
-}
-
-const hhmm = computed(() => parseParts(props.post.created_at).hhmm);
-const mmddyyyy = computed(() => parseParts(props.post.created_at).mmddyyyy);
-
-// === 内容渲染 (转义 + 链接 + 换行) ===
 function escapeHTML(str) {
   return str
     .replace(/&/g, "&amp;")
@@ -73,134 +56,161 @@ function escapeHTML(str) {
     .replace(/"/g, "&quot;");
 }
 
+function linkify(text) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
+}
+
 const linkedContent = computed(() => {
-  const raw = props.post.content || "";
-  const safe = escapeHTML(raw);
-
-  // 识别 URL
-  const withLinks = safe.replace(/(https?:\/\/[^\s]+)/g, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener">${url}</a>`;
-  });
-
-  // 换行变成 <br/>
-  return withLinks.replace(/\n/g, "<br/>");
+  const safe = escapeHTML(props.post.content);
+  return linkify(safe).replace(/\n/g, "<br/>");
 });
 </script>
 
 <style scoped>
-.focus-layout {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 1rem;
-  align-items: flex-start;
+/* ===== 容器布局 ===== */
+.focus-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
 }
 
-.focus-left {
-  min-width: 7rem;
+.focus-timeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* ===== 时间部分 ===== */
+.time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.time .clock {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.time .date {
+  font-size: 0.75rem;
   color: var(--muted);
-  font-size: 0.8rem;
-  user-select: none;
 }
 
-.focus-time {
-  text-align: center;
+/* ===== 圆点部分 ===== */
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--fg);
+  margin: 0 0.6rem;
+  flex-shrink: 0;
+  align-self: center;
   cursor: pointer;
-  line-height: 1.4;
-  margin-bottom: 0.75rem;
-}
-.focus-hm {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--fg);
-}
-.focus-date {
-  font-size: 0.8rem;
-  color: var(--muted);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
 }
 
+/* hover 呼吸光效 */
+.dot:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
+
+/* active 态闪光动画 */
+@keyframes dotPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.75);
+    transform: scale(1.1);
+  }
+}
+.dot.active {
+  animation: dotPulse 2.2s ease-in-out infinite;
+}
+
+/* ===== 帖子卡片 ===== */
+.post-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-card);
+  max-width: 520px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.35);
+}
+
+.post-card .content {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* ===== 导航按钮 ===== */
 .focus-nav {
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: var(--fg);
+  color: var(--muted);
+  font-size: 0.75rem;
+  gap: 0.4rem;
 }
 
-.focus-nav button {
+.nav-btn {
   background: none;
   border: none;
   color: var(--fg);
-  font-size: 1rem;
   cursor: pointer;
-  padding: 0.3rem;
-  transition: 0.2s;
+  font-size: 0.8rem;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
-.focus-nav button:hover:not(:disabled) {
-  transform: scale(1.2);
+.nav-btn:hover {
+  transform: scale(1.15);
+  opacity: 0.9;
 }
-.focus-nav button:disabled {
+.nav-btn:disabled {
   opacity: 0.3;
-  cursor: not-allowed;
+  cursor: default;
 }
 
-.dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 999px;
-  background-color: var(--fg);
-  margin: 6px 0;
-  box-shadow: 0 0 10px rgba(0,0,0,0.6);
-}
-@media (prefers-color-scheme: dark) {
-  .dot {
-    box-shadow: 0 0 10px rgba(255,255,255,0.4);
-  }
-}
-
-.idx-info {
-  margin-top: 0.5rem;
-  font-size: 0.7rem;
+.index {
+  font-size: 0.75rem;
+  margin: 0.25rem 0;
   color: var(--muted);
-  user-select: none;
-  text-align: center;
 }
 
-.focus-card {
-  min-width: 0;
-}
-
-.post-card.focus-card-inner {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  padding: 1rem 1rem 1rem;
-  box-shadow: var(--shadow-card);
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  font-size: 1.1rem;
-  line-height: 1.6;
-}
-
-.post-card.focus-card-inner .content a {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: rgba(255,255,255,0.4);
-}
-
-@media (max-width: 560px) {
-  .focus-layout {
-    grid-template-columns: 1fr;
-    row-gap: 1.5rem;
+/* ===== 响应式 ===== */
+@media (max-width: 600px) {
+  .focus-timeline {
+    flex-direction: column;
+    gap: 0.75rem;
   }
-
-  .focus-left {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    column-gap: 2rem;
+  .time {
+    align-items: center;
   }
-
-  .focus-time {
-    margin-bottom: 0;
+  .dot {
+    margin: 0;
+  }
+  .post-card {
+    max-width: 90%;
   }
 }
 </style>
