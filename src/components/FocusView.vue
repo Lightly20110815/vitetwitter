@@ -18,11 +18,8 @@
       </article>
     </div>
 
-    <!-- 底部的导航箭头与页码 -->
     <div class="focus-nav">
-      <button class="nav-btn" @click="$emit('prev')" :disabled="isFirst">▲</button>
       <span class="index">{{ index + 1 }} / {{ total }}</span>
-      <button class="nav-btn" @click="$emit('next')" :disabled="isLast">▼</button>
     </div>
   </div>
 </template>
@@ -32,22 +29,30 @@ import { computed } from "vue";
 
 const props = defineProps({
   post: { type: Object, required: true },
-  index: Number,
-  total: Number,
-  isFirst: Boolean,
-  isLast: Boolean,
+  index: { type: Number, required: true },
+  total: { type: Number, required: true },
+  isFirst: { type: Boolean, default: false },
+  isLast: { type: Boolean, default: false },
 });
 
+defineEmits(["toggleView"]); // 这里只发 toggleView，next/prev 已经移到 App.vue 控制
+
+/* ========== 时间部分 ========== */
 const timePart = computed(() => {
   const d = new Date(props.post.created_at);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${String(d.getHours()).padStart(2, "0")}:${String(
+    d.getMinutes()
+  ).padStart(2, "0")}`;
 });
 
 const datePart = computed(() => {
   const d = new Date(props.post.created_at);
-  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`;
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(
+    d.getDate()
+  )}/${d.getFullYear()}`;
 });
 
+/* ========== 内容渲染 ========== */
 function escapeHTML(str) {
   return str
     .replace(/&/g, "&amp;")
@@ -58,32 +63,38 @@ function escapeHTML(str) {
 
 function linkify(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
-  return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
+  return text.replace(
+    urlRegex,
+    (url) => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`
+  );
 }
 
 const linkedContent = computed(() => {
-  const safe = escapeHTML(props.post.content);
+  const safe = escapeHTML(props.post.content || "");
   return linkify(safe).replace(/\n/g, "<br/>");
 });
 </script>
 
 <style scoped>
-/* ===== 容器布局 ===== */
 .focus-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
+  width: 100%;
+  user-select: none;
 }
 
+/* 时间线布局 */
 .focus-timeline {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
+  transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
-/* ===== 时间部分 ===== */
+/* 时间区域 */
 .time {
   display: flex;
   flex-direction: column;
@@ -92,18 +103,16 @@ const linkedContent = computed(() => {
   line-height: 1.2;
   text-align: right;
 }
-
 .time .clock {
   font-size: 0.95rem;
   font-weight: 600;
 }
-
 .time .date {
   font-size: 0.75rem;
   color: var(--muted);
 }
 
-/* ===== 圆点部分 ===== */
+/* 白色小圆点 */
 .dot {
   width: 10px;
   height: 10px;
@@ -114,19 +123,14 @@ const linkedContent = computed(() => {
   align-self: center;
   cursor: pointer;
   box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    background 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
-
-/* hover 呼吸光效 */
 .dot:hover {
   transform: scale(1.2);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
 }
 
-/* active 态闪光动画 */
+/* 白点闪动动画 */
 @keyframes dotPulse {
   0%, 100% {
     box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
@@ -141,7 +145,7 @@ const linkedContent = computed(() => {
   animation: dotPulse 2.2s ease-in-out infinite;
 }
 
-/* ===== 帖子卡片 ===== */
+/* 帖子卡片样式 */
 .post-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
@@ -151,20 +155,22 @@ const linkedContent = computed(() => {
   max-width: 520px;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
-
 .post-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 24px -8px rgba(0,0,0,0.35);
 }
-
 .post-card .content {
   white-space: pre-wrap;
   word-wrap: break-word;
   font-size: 1rem;
   line-height: 1.6;
 }
+.post-card a {
+  color: var(--fg);
+  text-decoration: underline;
+}
 
-/* ===== 导航按钮 ===== */
+/* 底部计数文字 */
 .focus-nav {
   display: flex;
   flex-direction: column;
@@ -173,31 +179,13 @@ const linkedContent = computed(() => {
   font-size: 0.75rem;
   gap: 0.4rem;
 }
-
-.nav-btn {
-  background: none;
-  border: none;
-  color: var(--fg);
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-}
-.nav-btn:hover {
-  transform: scale(1.15);
-  opacity: 0.9;
-}
-.nav-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
 .index {
   font-size: 0.75rem;
   margin: 0.25rem 0;
   color: var(--muted);
 }
 
-/* ===== 响应式 ===== */
+/* 移动端自适应 */
 @media (max-width: 600px) {
   .focus-timeline {
     flex-direction: column;
