@@ -66,6 +66,7 @@ function formatTime(iso) {
   cursor: pointer;
   color: var(--muted);
   font-size: 0.8rem;
+
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
@@ -111,7 +112,7 @@ function formatTime(iso) {
   color: var(--muted);
 }
 
-/* 小屏：上下堆叠 */
+/* 窄屏自适应 */
 @media (max-width: 560px) {
   .tl-item {
     grid-template-columns: 1fr;

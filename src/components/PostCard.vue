@@ -30,14 +30,18 @@ function escapeHTML(str) {
 function linkify(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   return text.replace(
-    urlRegex,
-    url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`
+    url,
+    `<a href="${url}" target="_blank" rel="noopener">${url}</a>`
   );
 }
 
 const linkedContent = computed(() => {
-  const safe = escapeHTML(props.content);
-  return linkify(safe).replace(/\n/g, "<br/>");
+  const safe = escapeHTML(props.content || "");
+  // 手写 linkify，避免上面那个小 bug
+  const withLinks = safe.replace(/(https?:\/\/[^\s]+)/g, (match) => {
+    return `<a href="${match}" target="_blank" rel="noopener">${match}</a>`;
+  });
+  return withLinks.replace(/\n/g, "<br/>");
 });
 
 function formatTime(iso) {
@@ -45,8 +49,8 @@ function formatTime(iso) {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
-  const hh = String(d.getHours() + "").padStart(2, "0");
-  const min = String(d.getMinutes() + "").padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
 }
 
@@ -74,12 +78,11 @@ const prettyTime = computed(() => formatTime(props.created_at));
 .content a {
   color: inherit;
   text-decoration: underline;
-  text-decoration-color: rgba(0, 0, 0, 0.3);
+  text-decoration-color: rgba(0,0,0,0.3);
 }
-
 @media (prefers-color-scheme: dark) {
   .content a {
-    text-decoration-color: rgba(255, 255, 255, 0.4);
+    text-decoration-color: rgba(255,255,255,0.4);
   }
 }
 
