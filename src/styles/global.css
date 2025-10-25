@@ -1,0 +1,86 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-stack);
+  line-height: 1.5;
+  margin: 0;
+  padding: 2rem 1rem 4rem;
+  display: flex;
+  justify-content: center;
+}
+
+.page {
+  width: 100%;
+  max-width: 600px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  row-gap: 1.5rem;
+}
+
+/* Header */
+.site-header {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.site-header .name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.site-header .sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+/* Timeline section */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+}
+
+
+/* Footer */
+.site-footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  user-select: none;
+  margin-top: 2rem;
+}
+
+/* Empty state */
+.empty {
+  color: var(--muted);
+  text-align: center;
+  margin-top: 4rem;
+  font-size: 0.9rem;
+}

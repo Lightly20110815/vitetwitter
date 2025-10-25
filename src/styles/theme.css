@@ -1,0 +1,29 @@
+:root {
+  color-scheme: light dark;
+
+  /* Light mode */
+  --bg: #ffffff;
+  --fg: #111111;
+  --muted: #666666;
+  --card-bg: #ffffff;
+  --border-color: rgba(0, 0, 0, 0.08);
+
+  --radius-xl: 16px;
+  --shadow-card:
+    0 30px 60px -10px rgba(0, 0, 0, 0.30),
+    0 18px 36px -18px rgba(0, 0, 0, 0.40);
+
+  --font-stack: -apple-system, BlinkMacSystemFont, "Inter",
+    "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f10;
+    --fg: #ececec;
+    --muted: #888888;
+    --card-bg: #1a1a1d;
+    --border-color: rgba(255, 255, 255, 0.08);
+  }
+}
