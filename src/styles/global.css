@@ -1,32 +1,54 @@
+/* 全局基础重置 */
 * {
   box-sizing: border-box;
 }
 
+/* 整个页面背景和文字基础 */
 body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-stack);
   line-height: 1.5;
   margin: 0;
-  padding: 2rem 1rem 4rem;
+
+  /* 让背景和布局撑满视窗 */
+  height: 100vh;
+
+  /* 我们的 app 有一个 .page 容器。
+     这里让 .page 居中到屏幕中央，无论桌面还是移动。 */
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
+/* 页面主容器 */
 .page {
   width: 100%;
-  max-width: 600px;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  row-gap: 1.5rem;
+  max-width: 900px; /* 稍微放大点呼吸空间，原来是 600px */
+
+  /* 改成纵向 flex 布局，分成：header / 内容区 / footer */
+  display: flex;
+  flex-direction: column;
+
+  /* 把页面整个拉到全高，这样 footer 能贴近底部 */
+  height: 100vh;
+
+  /* 两端分布：header在上，footer在下，中间的view-area占中段 */
+  justify-content: space-between;
+
+  /* 内边距，避免内容贴边 */
+  padding: 2rem 1rem 2rem;
 }
 
-/* Header */
+/* 顶部标题区域（你的 "Sy · timeline" 那块） */
 .site-header {
   text-align: center;
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 500;
+
+  /* 不要太靠顶部，给一点空间 */
+  margin-bottom: 1rem;
 }
 
 .site-header .name {
@@ -42,45 +64,60 @@ body {
   line-height: 1.4;
 }
 
-/* Timeline section */
+/* 中间主展示区（FocusView / TimelineList） */
+.view-area {
+  /* 我们让它吃掉中间的剩余空间 */
+  flex: 1;
+
+  /* 然后把里面的内容（也就是 FocusView 的左右两列）居中 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* 让它别贴 header 太死 */
+  padding: 1rem 0;
+}
+
+/* FocusView 里面（左：时间+按钮，右：卡片）本身已经用 grid 和 min-width:7rem 做布局了
+   我们不在这里强行改它的方向，这样它会在大屏幕上并排，
+   在手机上用它自己的 @media 规则自动折叠成上下 */
+
 .timeline {
   display: flex;
   flex-direction: column;
   margin-top: 1rem;
 }
 
-.timeline {
-  display: flex;
-  flex-direction: column;
-  margin-top: 1rem;
-}
-
-.timeline {
-  display: flex;
-  flex-direction: column;
-  margin-top: 1rem;
-}
-
-.timeline {
-  display: flex;
-  flex-direction: column;
-  margin-top: 1rem;
-}
-
-
-/* Footer */
-.site-footer {
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--muted);
-  user-select: none;
-  margin-top: 2rem;
-}
-
-/* Empty state */
+/* 没贴子时的占位文案 */
 .empty {
   color: var(--muted);
   text-align: center;
   margin-top: 4rem;
   font-size: 0.9rem;
+}
+
+/* 底部小尾巴 */
+.site-footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  user-select: none;
+
+  /* 给脚注一点点上方间距，不然太贴边 */
+  margin-top: 2rem;
+}
+
+/* 响应式针对非常窄的屏幕（比如手机）稍微调 padding */
+@media (max-width: 480px) {
+  .page {
+    padding: 1rem 1rem 1.5rem;
+  }
+
+  .site-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .view-area {
+    padding: 0.5rem 0;
+  }
 }
