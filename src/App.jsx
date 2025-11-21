@@ -339,18 +339,16 @@ export default function App() {
 
                   {/* 右侧内容 */}
                   <div className="flex-1 pb-8">
-                    <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-lg shadow-sm p-6">
+                    <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-lg shadow-sm p-6 relative">
                       {isAuth && (
-                        <div className="flex justify-end mb-3">
-                          <button
-                            onClick={() => handleDelete(post.id)}
-                            className="text-gray-400 hover:text-red-500 text-sm"
-                          >
-                            删除
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleDelete(post.id)}
+                          className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-sm"
+                        >
+                          删除
+                        </button>
                       )}
-                      <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                      <p className="text-gray-800 whitespace-pre-wrap leading-relaxed pr-12">
                         {post.content}
                       </p>
                     </div>
