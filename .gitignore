@@ -1,2 +1,5 @@
-"dist" 
-".env*.local" 
+node_modules
+dist
+.env*.local
+data/posts.json
+.DS_Store

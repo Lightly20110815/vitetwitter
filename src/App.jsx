@@ -2,22 +2,16 @@ import React, { useState, useEffect } from 'react';
 
 export default function App() {
   const [posts, setPosts] = useState([]);
-  const [newPost, setNewPost] = useState('');
-  const [password, setPassword] = useState('');
-  const [isAuth, setIsAuth] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [clickCount, setClickCount] = useState(0);
   const [currentColorIndex, setCurrentColorIndex] = useState(0);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
 
   // 配置区域 - 可自定义
-  const ADMIN_PASSWORD = 'your_password_here';
   const TITLE = '我的推博';
   const SUBTITLE = '记录生活点滴';
-  const AUTHOR_NAME = 'Sy Yann';
   
-  // 背景配置 - 可以是颜色、渐变、或图片URL
+  // 背景配置
   const BACKGROUND = 'linear-gradient(135deg, #cdb0e3ff 0%, #40c4c4ff 100%)';
   
   // 字体配置
@@ -60,25 +54,57 @@ export default function App() {
 
   const loadPosts = async () => {
     try {
-      // 优先从localStorage加载（开发环境）
-      const saved = localStorage.getItem('microblog_posts');
-      if (saved) {
-        setPosts(JSON.parse(saved));
+      // 1. 读取帖子列表
+      const indexResponse = await fetch('/posts.txt');
+      if (!indexResponse.ok) {
+        throw new Error('无法加载帖子列表');
       }
       
-      // 尝试从API加载（生产环境）
-      try {
-        const response = await fetch('/api/posts');
-        if (response.ok) {
-          const data = await response.json();
-          setPosts(data);
-          // 同步到localStorage
-          localStorage.setItem('microblog_posts', JSON.stringify(data));
-        }
-      } catch (apiError) {
-        // API不可用时，继续使用localStorage的数据
-        console.log('使用本地存储');
-      }
+      const indexText = await indexResponse.text();
+      const fileNames = indexText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith('#')); // 过滤空行和注释
+
+      // 2. 并发读取所有帖子内容
+      const postsData = await Promise.all(
+        fileNames.map(async (fileName) => {
+          try {
+            const response = await fetch(`/${fileName}`);
+            if (!response.ok) {
+              console.error(`无法加载 ${fileName}`);
+              return null;
+            }
+            
+            const content = await response.text();
+            
+            // 从文件名解析时间戳
+            const year = parseInt(fileName.substring(0, 4));
+            const month = parseInt(fileName.substring(4, 6));
+            const day = parseInt(fileName.substring(6, 8));
+            const hour = parseInt(fileName.substring(8, 10));
+            const minute = parseInt(fileName.substring(10, 12));
+            const second = parseInt(fileName.substring(12, 14));
+            
+            const timestamp = new Date(year, month - 1, day, hour, minute, second).getTime();
+
+            return {
+              id: fileName,
+              content: content.trim(),
+              author: 'Sy Yann',
+              timestamp
+            };
+          } catch (error) {
+            console.error(`读取 ${fileName} 失败:`, error);
+            return null;
+          }
+        })
+      );
+
+      // 3. 过滤掉失败的帖子并设置状态
+      const validPosts = postsData.filter(post => post !== null);
+      setPosts(validPosts);
+      
     } catch (error) {
       console.error('加载帖子失败:', error);
     } finally {
@@ -89,78 +115,8 @@ export default function App() {
   const handleButtonClick = () => {
     const newCount = clickCount + 1;
     setClickCount(newCount);
-    
-    if (newCount === 15) {
-      setShowAuthModal(true);
-      setClickCount(0);
-    } else {
-      setCurrentColorIndex((currentColorIndex + 1) % BUTTON_COLORS.length);
-      setCurrentTextIndex((currentTextIndex + 1) % BUTTON_TEXTS.length);
-    }
-  };
-
-  const handleAuth = () => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAuth(true);
-      setShowAuthModal(false);
-      setPassword('');
-    } else {
-      alert('密码错误');
-    }
-  };
-
-  const handlePost = async () => {
-    if (!newPost.trim()) return;
-
-    const post = {
-      id: Date.now().toString(),
-      content: newPost,
-      author: AUTHOR_NAME,
-      timestamp: Date.now()
-    };
-
-    // 先更新本地状态和localStorage
-    const updated = [post, ...posts];
-    setPosts(updated);
-    setNewPost('');
-    localStorage.setItem('microblog_posts', JSON.stringify(updated));
-
-    // 尝试同步到API
-    try {
-      const response = await fetch('/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(post)
-      });
-
-      if (!response.ok) {
-        console.log('API同步失败，已保存到本地');
-      }
-    } catch (error) {
-      console.log('API不可用，已保存到本地');
-    }
-  };
-
-  const handleDelete = async (postId) => {
-    if (!confirm('确定要删除这条帖子吗？')) return;
-
-    // 先更新本地状态和localStorage
-    const filtered = posts.filter(p => p.id !== postId);
-    setPosts(filtered);
-    localStorage.setItem('microblog_posts', JSON.stringify(filtered));
-
-    // 尝试同步到API
-    try {
-      const response = await fetch(`/api/posts?id=${postId}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) {
-        console.log('API同步失败，已从本地删除');
-      }
-    } catch (error) {
-      console.log('API不可用，已从本地删除');
-    }
+    setCurrentColorIndex((currentColorIndex + 1) % BUTTON_COLORS.length);
+    setCurrentTextIndex((currentTextIndex + 1) % BUTTON_TEXTS.length);
   };
 
   const formatTime = (timestamp) => {
@@ -249,71 +205,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* 认证弹窗 */}
-        {showAuthModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-80">
-              <h2 className="text-xl font-bold mb-4">输入管理密码</h2>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
-                placeholder="密码"
-                className="w-full p-3 border border-gray-300 rounded-lg mb-4"
-                autoFocus
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={handleAuth}
-                  className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600"
-                >
-                  确认
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAuthModal(false);
-                    setPassword('');
-                  }}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
-                >
-                  取消
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 发帖框 - 只在认证后显示 */}
-        {isAuth && (
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-            <textarea
-              value={newPost}
-              onChange={(e) => setNewPost(e.target.value)}
-              placeholder="分享新鲜事..."
-              className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows="4"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                  handlePost();
-                }
-              }}
-            />
-            <div className="flex justify-between items-center mt-3">
-              <span className="text-sm text-gray-400">
-                {newPost.length} 字符
-              </span>
-              <button
-                onClick={handlePost}
-                disabled={!newPost.trim()}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                发布
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* 帖子列表 - 时间线样式 */}
         <div className="space-y-0">
           {posts.length === 0 ? (
@@ -340,15 +231,7 @@ export default function App() {
                   {/* 右侧内容 */}
                   <div className="flex-1 pb-8">
                     <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-lg shadow-sm p-6 relative">
-                      {isAuth && (
-                        <button
-                          onClick={() => handleDelete(post.id)}
-                          className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-sm"
-                        >
-                          删除
-                        </button>
-                      )}
-                      <p className="text-gray-800 whitespace-pre-wrap leading-relaxed pr-12">
+                      <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
                         {post.content}
                       </p>
                     </div>
