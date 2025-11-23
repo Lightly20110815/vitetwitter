@@ -1,10 +1,10 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
-}
-{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ],
   "headers": [
     {
-      "source": "/(.*).html",
+      "source": "/(.*)\\.html",
       "headers": [
         { "key": "Cache-Control", "value": "no-store" }
       ]
